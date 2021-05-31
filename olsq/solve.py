@@ -164,7 +164,7 @@ class OLSQ:
             gates = ((2,), (1,2), (2,), (0,1))
             gate_spec = ("h", "cx", "tdg", "cx")
         """
-        print("forked version")
+        print("version 2")
         if input_mode == "IR":
             self.count_program_qubit = self.count_physical_qubit
             self.list_gate_qubits = program[1]
@@ -172,12 +172,12 @@ class OLSQ:
         elif input_mode == "benchmark":
             f = pkgutil.get_data(__name__, "benchmarks/" + program + ".qasm")
             program = input_qasm(f.decode("utf-8"))
-            self.count_program_qubit = program[0]
+            self.count_program_qubit = self.count_physical_qubit
             self.list_gate_qubits = program[1]
             self.list_gate_name = program[2]
         else:
             program = input_qasm(program)
-            self.count_program_qubit = program[0]
+            self.count_program_qubit = self.count_physical_qubit
             self.list_gate_qubits = program[1]
             self.list_gate_name = program[2]
 
