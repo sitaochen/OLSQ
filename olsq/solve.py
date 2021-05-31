@@ -166,7 +166,7 @@ class OLSQ:
         """
         print("forked version")
         if input_mode == "IR":
-            self.count_program_qubit = program[0]
+            self.count_program_qubit = self.count_physical_qubit
             self.list_gate_qubits = program[1]
             self.list_gate_name = program[2]
         elif input_mode == "benchmark":
@@ -177,7 +177,7 @@ class OLSQ:
             self.list_gate_name = program[2]
         else:
             program = input_qasm(program)
-            self.count_program_qubit = self.count_physical_qubit
+            self.count_program_qubit = program[0]
             self.list_gate_qubits = program[1]
             self.list_gate_name = program[2]
 
