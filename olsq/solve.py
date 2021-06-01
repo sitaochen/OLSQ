@@ -164,20 +164,20 @@ class OLSQ:
             gates = ((2,), (1,2), (2,), (0,1))
             gate_spec = ("h", "cx", "tdg", "cx")
         """
-        print("version 3")
+        print("version 2")
         if input_mode == "IR":
-            self.count_program_qubit = program[0]
+            self.count_program_qubit = self.count_physical_qubit
             self.list_gate_qubits = program[1]
             self.list_gate_name = program[2]
         elif input_mode == "benchmark":
             f = pkgutil.get_data(__name__, "benchmarks/" + program + ".qasm")
             program = input_qasm(f.decode("utf-8"))
-            self.count_program_qubit = program[0]
+            self.count_program_qubit = self.count_physical_qubit
             self.list_gate_qubits = program[1]
             self.list_gate_name = program[2]
         else:
             program = input_qasm(program)
-            self.count_program_qubit = program[0]
+            self.count_program_qubit = self.count_physical_qubit
             self.list_gate_qubits = program[1]
             self.list_gate_name = program[2]
 
@@ -254,7 +254,6 @@ class OLSQ:
         device = self.device
         list_gate_qubits = self.list_gate_qubits
         count_program_qubit = self.count_program_qubit
-        program_qubits_idx = list(set([q for pair in list_gate_qubits for q in pair]))
         list_gate_name = self.list_gate_name
         count_physical_qubit = self.count_physical_qubit
         list_qubit_edge = self.list_qubit_edge
@@ -345,10 +344,8 @@ class OLSQ:
             # variable setting 
 
             # at cycle t, logical qubit q is mapped to pi[q][t]
-            # pi = [[Int("map_q{}_t{}".format(i, j)) for j in range(bound_depth)]
-            #       for i in range(count_program_qubit)]
-            pi = {i: {j: Int("map_q{}_t{}".format(i, j)) for j in range(bound_depth)}
-                  for i in program_qubits_idx}
+            pi = [[Int("map_q{}_t{}".format(i, j)) for j in range(bound_depth)]
+                  for i in range(count_program_qubit)]
 
             # time coordinate for gate l is time[l]
             time = IntVector('time', count_gate)
@@ -383,7 +380,7 @@ class OLSQ:
             # constraint setting
 
             for t in range(bound_depth):
-                for m in program_qubits_idx:
+                for m in range(count_program_qubit):
                     lsqc.add(pi[m][t] >= 0, pi[m][t] < count_physical_qubit)
                     for mm in range(m):
                         lsqc.add(pi[m][t] != pi[mm][t])
@@ -450,7 +447,7 @@ class OLSQ:
 
             for t in range(bound_depth - 1):
                 for n in range(count_physical_qubit):
-                    for m in program_qubits_idx:
+                    for m in range(count_program_qubit):
                         lsqc.add(
                             Implies(And(sum([If(sigma[k][t], 1, 0)
                                 for k in list_span_edge[n]]) == 0,
@@ -458,7 +455,7 @@ class OLSQ:
 
             for t in range(bound_depth - 1):
                 for k in range(count_qubit_edge):
-                    for m in program_qubits_idx:
+                    for m in range(count_program_qubit):
                         lsqc.add(Implies(And(sigma[k][t] == True,
                             pi[m][t] == list_qubit_edge[k][0]),
                                 pi[m][t + 1] == list_qubit_edge[k][1]))
@@ -484,7 +481,7 @@ class OLSQ:
                     lsqc.add(u[n] == sum([If(space[l] == n, 1, 0)
                         for l in list_gate_single]))
                     lsqc.add(w[n] == sum([If(pi[m][bound_depth - 1] == n, 1, 0)
-                        for m in program_qubits_idx]))
+                        for m in range(count_program_qubit)]))
                 for k in range(count_qubit_edge):
                     lsqc.add(v[k] == sum([If(space[l] == k, 1, 0)
                         for l in list_gate_two]))
@@ -632,7 +629,7 @@ class OLSQ:
                 raise ValueError("Expect single-qubit or two-qubit gate.")
 
         final_mapping = []
-        for m in program_qubits_idx:
+        for m in range(count_program_qubit):
             tmp_depth = result_depth - 1
             if self.if_transition_based:
                 tmp_depth = map_to_block[result_depth - 1]
